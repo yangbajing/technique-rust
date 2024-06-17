@@ -1,0 +1,27 @@
+[workspace]
+members = ["clis/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.79"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+#unused = "allow" # For experimental dev
+
+[workspace.dependencies]
+futures = "0.3"
+bytes = "1"
+clap = { version = "4.5.7", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+# -- Error
+anyhow = "1"
+thiserror = "1"
+# -- Serde
+serde = { version = "1", features = ["derive"] }
+serde_with = { version = "3", features = ["time_0_3"] }
+serde_json = { version = "1" }
+serde_repr = "0.1"

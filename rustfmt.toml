@@ -1,0 +1,16 @@
+# rustfmt doc - https://rust-lang.github.io/rustfmt/
+
+hard_tabs = false
+edition = "2021"
+#version = "Two"
+
+# For recording
+max_width = 120
+# chain_width = 40
+# array_width = 40
+
+comment_width = 120
+format_code_in_doc_comments = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Item"
+wrap_comments = true
