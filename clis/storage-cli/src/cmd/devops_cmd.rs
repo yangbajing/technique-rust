@@ -7,10 +7,10 @@ use super::FileOperation;
 
 #[derive(Debug, Default, Parser)]
 #[command(name = "devops-cli")]
-#[command(version, about = "DevOps command tool", long_about = None)]
+#[command(version, about = "DevOps command tool")]
 pub struct DevopsCmd {
-    #[arg(short, long, default_value_t = StorageSource::Obs)]
-    pub service: StorageSource,
+    #[arg(short, long, help = "The storage service to use, default is 'obs'")]
+    pub service: Option<StorageSource>,
 
     #[arg(short, long)]
     pub bucket: Option<String>,
@@ -28,10 +28,9 @@ pub struct DevopsCmd {
     pub file_op: Option<FileOperation>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, ValueEnum, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, ValueEnum, Deserialize)]
 pub enum StorageSource {
     /// 华为云 OBS
-    #[default]
     Obs,
     /// 阿里云 OSS
     Oss,

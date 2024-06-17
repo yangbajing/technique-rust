@@ -1,5 +1,5 @@
 use anyhow::Result;
-use config::{builder::DefaultState, ConfigBuilder};
+use config::{builder::DefaultState, ConfigBuilder, FileFormat};
 use serde::Deserialize;
 
 use crate::cmd::{DevopsCmd, StorageSource};
@@ -29,35 +29,47 @@ pub struct StorageConf {
 
 impl DevopsConf {
     pub fn from_devops_cmd(cmd: &DevopsCmd) -> Result<Self> {
-        let mut cb = config::Config::builder();
+        let mut cb = config::Config::builder()
+            .add_source(config::File::from_str(include_str!("default.toml"), FileFormat::Toml));
         if let Some(config_file) = cmd.config_file.as_deref() {
             cb = cb.add_source(config::File::with_name(config_file));
         }
 
-        std::env::set_var("SERVICE", cmd.service.to_string());
+        if std::env::var("SERVICE").iter().any(|s| s.is_empty()) {
+            // 当环境变量 SERVICE 未设置时
+            if let Some(value) = cmd.service.as_ref() {
+                // 当命令行参数 service 设置时
+                std::env::set_var("SERVICE", value.to_string());
+            }
+        }
+        let service = match std::env::var("SERVICE") {
+            Ok(service) if !service.is_empty() => service,
+            _ => cmd.service.clone().unwrap().to_string(),
+        };
+        std::env::set_var("SERVICE", service);
         if let Some(ak) = cmd.ak.as_deref() {
-            std::env::set_var("STORAGE.AK", ak);
+            std::env::set_var("STORAGE__AK", ak);
         }
         if let Some(sk) = cmd.sk.as_deref() {
-            std::env::set_var("STORAGE.SK", sk);
+            std::env::set_var("STORAGE__SK", sk);
         }
         if let Some(bucket) = cmd.bucket.as_deref() {
-            std::env::set_var("STORAGE.BUCKET", bucket);
+            std::env::set_var("STORAGE__BUCKET", bucket);
         }
-        Self::from_config_builder(cb)
-    }
-
-    pub fn from_file(file: &str) -> Result<Self> {
-        let cb = config::Config::builder().add_source(config::File::with_name(file));
         Self::from_config_builder(cb)
     }
 
     pub fn from_config_builder(cb: ConfigBuilder<DefaultState>) -> Result<Self> {
         let v = cb
-            .add_source(config::Environment::default())
+            .add_source(config::Environment::default().separator("__"))
             .build()?
             .try_deserialize()?;
         Ok(v)
+    }
+
+    pub fn from_file(file: &str) -> Result<Self> {
+        let cb = config::Config::builder().add_source(config::File::with_name(file));
+        Self::from_config_builder(cb)
     }
 }
 
@@ -81,7 +93,6 @@ mod tests {
         };
 
         let cmd = DevopsCmd {
-            service: StorageSource::Obs,
             ak: Some("<ak>".to_string()),
             config_file,
             file_op: Some(crate::cmd::FileOperation::Stat {

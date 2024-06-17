@@ -28,7 +28,7 @@ fn builder_oss(sc: &StorageConf) -> Result<Operator> {
 }
 
 fn builder_obs(sc: &StorageConf) -> Result<Operator> {
-    let mut b = Obs::default();
+    let mut b: Obs = Obs::default();
     b.bucket(&sc.bucket)
         .endpoint(&sc.endpoint)
         .access_key_id(&sc.ak)

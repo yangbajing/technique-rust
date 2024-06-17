@@ -1,12 +1,9 @@
 use anyhow::Result;
 use clap::Subcommand;
 use futures::TryStreamExt;
-use log::{debug, info};
+use log::info;
 use opendal::Operator;
-use tokio::{
-    fs::File,
-    io::{AsyncReadExt, AsyncWriteExt},
-};
+use tokio::{fs::File, io::AsyncReadExt};
 
 #[derive(Debug, Subcommand)]
 pub enum FileOperation {
@@ -28,8 +25,10 @@ impl FileOperation {
 
 /// 上传本地文件到对象存储
 async fn put_src_to_object_key(op: &Operator, src: &str, object_key: &str) -> Result<()> {
+    use futures::AsyncWriteExt;
+
     let mut f = File::open(src).await?;
-    let mut writer = op.writer_with(object_key).await?;
+    let mut writer = op.writer_with(object_key).await?.into_futures_async_write();
     let mut buf = [0_u8; 8192];
     let mut uploaded = 0;
 
@@ -38,9 +37,8 @@ async fn put_src_to_object_key(op: &Operator, src: &str, object_key: &str) -> Re
         if n == 0 {
             break;
         }
+        writer.write_all(&buf[..n]).await?;
         uploaded += n;
-        writer.write_from(&buf[..n]).await?;
-        debug!("The file has been uploaded in {uploaded} bytes.");
     }
     writer.close().await?;
 
@@ -50,6 +48,8 @@ async fn put_src_to_object_key(op: &Operator, src: &str, object_key: &str) -> Re
 
 /// 下载对象存储文件到本地
 async fn get_object_key_to_dst(op: &Operator, object_key: &str, dst: &str) -> Result<()> {
+    use tokio::io::AsyncWriteExt;
+
     let mut f = File::create_new(dst).await?;
     let reader = op.reader_with(object_key).await?;
     let mut readed = 0u64;
@@ -61,7 +61,6 @@ async fn get_object_key_to_dst(op: &Operator, object_key: &str, dst: &str) -> Re
         }
         readed += item.len() as u64;
         f.write_all(&item).await?;
-        debug!("The file has been downloaded with a size of {} bytes.", readed);
     }
 
     info!("Total file download of {} bytes.", readed);
