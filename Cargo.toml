@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.79"
+rust-version = "1.80"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -14,7 +14,7 @@ unsafe_code = "forbid"
 [workspace.dependencies]
 futures = "0.3"
 bytes = "1"
-clap = { version = "4.5.7", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 log = "0.4"
 env_logger = "0.11"
 # -- Error
